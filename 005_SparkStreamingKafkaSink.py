@@ -64,7 +64,10 @@ if __name__ == "__main__":
 
     # kafka_target_df = notification_df.selectExpr("InvoiceNumber as key", "to_json(struct(*)) as value")
 
-    kafka_target_df = notification_df.selectExpr("InvoiceNumber as key", "to_json(struct(*)) as value")
+    kafka_target_df = notification_df.selectExpr("InvoiceNumber as key", """to_json(named_struct(
+                                                 'CustomerCardNo', CustomerCardNo,
+                                                 'TotalAmount', TotalAmount,
+                                                 'EarnedLoyaltyPoints', TotalAmount * 0.2)) as value""")
     #kafka_target_df.show() #can be used with read while development
     kafka_target_df.printSchema()
     '''notification_writer_query = kafka_target_df.writeStream \
