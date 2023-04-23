@@ -53,7 +53,6 @@ if __name__=="__main__":
                 .option("startingOffsets","earliest")\
                 .load()
 
-    raw_df.printSchema()
 
     value_df=raw_df.select(from_json(col("value").cast("string"),schema).alias("value"))
 

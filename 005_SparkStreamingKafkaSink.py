@@ -2,6 +2,10 @@ from pyspark.sql import *
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 
+#### Please keep spark and kafka jar version same else you will get
+#   java.class.notfounderror:org/apache/spark/sql/internal/connector/supportsstreamingupdate
+
+
 # By Default schema inference is false for streaming data sources --> although we could set it to true(.config("spark.sql.streaming.schemaInference","true"))
 # we can set configuration in spark session to download dependencies of kafka but it is not recommended I have set is in sparkDefault.conf
 # .config("spark.jars.packages","org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0")\
@@ -52,7 +56,7 @@ if __name__ == "__main__":
         .option("startingOffsets", "earliest") \
         .load()
 
-    raw_df.printSchema()
+    #raw_df.printSchema()
 
     value_df = raw_df.select(from_json(col("value").cast("string"), schema).alias("value"))
     notification_df = value_df.select("value.InvoiceNumber", "value.CustomerCardNo", "value.TotalAmount") \
@@ -60,18 +64,14 @@ if __name__ == "__main__":
 
     # kafka_target_df = notification_df.selectExpr("InvoiceNumber as key", "to_json(struct(*)) as value")
 
-    kafka_target_df = notification_df.selectExpr("InvoiceNumber as key",
-                                                 """to_json(named_struct(
-                                                 'CustomerCardNo', CustomerCardNo,
-                                                 'TotalAmount', TotalAmount,
-                                                 'EarnedLoyaltyPoints', TotalAmount * 0.2)) as value""")
+    kafka_target_df = notification_df.selectExpr("InvoiceNumber as key", "to_json(struct(*)) as value")
     #kafka_target_df.show() #can be used with read while development
-    '''
-    notification_writer_query = kafkaTarget_df.writeStream \
+    kafka_target_df.printSchema()
+    '''notification_writer_query = kafka_target_df.writeStream \
         .format("console") \
         .outputMode("append") \
         .option("truncate", "false") \
-        .option("checkpointLocation", "chk-point-dir") \
+        .option("checkpointLocation", "chk-point-dir_005_1") \
         .start()
     '''
 
